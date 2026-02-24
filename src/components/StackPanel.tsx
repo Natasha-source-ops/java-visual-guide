@@ -41,21 +41,25 @@ export default function StackPanel({ stackFrames }: StackPanelProps) {
               <p className="text-xs text-muted-foreground italic">Keine Variablen</p>
             ) : (
               frame.variables.map((v) => (
-                <div key={v.name} className="flex items-center gap-2 text-xs font-code">
-                  <span className="text-code-type w-12 shrink-0">{v.type}</span>
-                  <span className="text-foreground">{v.name}</span>
-                  <span className="text-muted-foreground">=</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-xs transition-all duration-500 ${
-                      v.changed
-                        ? "bg-primary/20 text-primary font-bold value-changed"
-                        : v.isReference
-                          ? "text-accent"
-                          : "text-foreground bg-secondary/50"
-                    }`}
-                  >
-                    {v.value}
-                  </span>
+                <div key={v.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs font-code">
+                  <div className="min-w-0 flex items-center gap-2 overflow-hidden">
+                    <span className="text-code-type shrink-0 max-w-[8.5rem] truncate">{v.type}</span>
+                    <span className="text-foreground truncate">{v.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-muted-foreground">=</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-xs whitespace-nowrap transition-all duration-500 ${
+                        v.changed
+                          ? "bg-primary/20 text-primary font-bold value-changed"
+                          : v.isReference
+                            ? "text-accent"
+                            : "text-foreground bg-secondary/50"
+                      }`}
+                    >
+                      {v.value}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
