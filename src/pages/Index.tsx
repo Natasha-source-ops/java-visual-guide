@@ -8,8 +8,11 @@ import ExplanationPanel from "@/components/ExplanationPanel";
 import QuizPanel from "@/components/QuizPanel";
 import ControlBar from "@/components/ControlBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Code2, GraduationCap, Brain } from "lucide-react";
+import { Code2, GraduationCap, Brain, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "@/lib/auth";
 
 const emptyStep: ExecutionStep = {
   lineNumber: -1,
@@ -20,6 +23,7 @@ const emptyStep: ExecutionStep = {
 };
 
 interface QuizAnswer {
+  customQuestionAnswers?: Record<string, string>;
   question1?: string;
   line?: number;
   snippet?: string;
@@ -29,6 +33,12 @@ interface QuizAnswer {
 
 const VORLESUNG3 = "VL 03 - Instanzen, Klassen, Pakete";
 const VORLESUNG4 = "04-Typen, Module, Schnittstellen 11.05.25";
+const VORLESUNG2 = "VL 02- Bauen, Testen, Teilen";
+const VORLESUNG5 = "VL 05 - Collections";
+const VORLESUNG6 = "VL 06 - Algorithmen";
+const VORLESUNG7 = "VL 07 - Nebenläufigkeit";
+const VL03_PRIORITY_EXAMPLE_ID = "vl03-printable-item-inventory";
+const VL04_PRIORITY_EXAMPLE_ID = "typen-module-schnittstellen";
 
 function buildQuizOptions(correctLine: number, currentLine: number, maxLine: number, tracedLines: number[]) {
   const candidates = new Set<number>();
@@ -55,20 +65,28 @@ function buildQuizOptions(correctLine: number, currentLine: number, maxLine: num
 }
 
 export default function Index() {
+  const navigate = useNavigate();
   const [selectedExampleId, setSelectedExampleId] = useState(javaExamples[0].id);
   const [selectedSemester, setSelectedSemester] = useState<"semester1" | "semester2">(javaExamples[0].semester);
-  const [selectedLecture, setSelectedLecture] = useState<string>(VORLESUNG3);
+  const [selectedLecture, setSelectedLecture] = useState<string>(VORLESUNG2);
   const [currentStep, setCurrentStep] = useState(-1);
   const [isRunning, setIsRunning] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, QuizAnswer>>({});
   const runRef = useRef(false);
   const semester1Examples = javaExamples.filter((exampleItem) => exampleItem.semester === "semester1");
   const semester2Examples = javaExamples.filter((exampleItem) => exampleItem.semester === "semester2");
-  const semester2Lectures = [VORLESUNG3, VORLESUNG4];
+  const semester2Lectures = [VORLESUNG2, VORLESUNG3, VORLESUNG4, VORLESUNG5, VORLESUNG6, VORLESUNG7];
   const semesterExamples =
     selectedSemester === "semester1"
       ? semester1Examples
       : semester2Examples.filter((exampleItem) => exampleItem.lecture === selectedLecture);
+  const vl03OnlySelectedInRightDropdown =
+    selectedSemester === "semester2" && selectedLecture === VORLESUNG3;
+  const filteredExampleOptions = vl03OnlySelectedInRightDropdown
+    ? semesterExamples.filter((ex) => ex.id === selectedExampleId)
+    : semesterExamples;
+  const exampleDropdownOptions =
+    filteredExampleOptions.length > 0 ? filteredExampleOptions : semesterExamples;
 
   const example =
     semesterExamples.find((e) => e.id === selectedExampleId) ??
@@ -145,13 +163,13 @@ export default function Index() {
     setSelectedSemester(semester);
 
     if (semester === "semester2") {
-      setSelectedLecture(VORLESUNG3);
+      setSelectedLecture(VORLESUNG2);
     }
 
     const nextSemesterExamples =
       semester === "semester1"
         ? semester1Examples
-        : semester2Examples.filter((exampleItem) => exampleItem.lecture === VORLESUNG3);
+        : semester2Examples.filter((exampleItem) => exampleItem.lecture === VORLESUNG2);
     const firstExample = nextSemesterExamples[0];
     if (firstExample) {
       setSelectedExampleId(firstExample.id);
@@ -165,11 +183,34 @@ export default function Index() {
     setQuizAnswers({});
     setSelectedLecture(lecture);
 
+    if (lecture === VORLESUNG3) {
+      const preferred = semester2Examples.find((exampleItem) => exampleItem.id === VL03_PRIORITY_EXAMPLE_ID);
+      if (preferred) {
+        setSelectedExampleId(preferred.id);
+        return;
+      }
+    }
+
+    if (lecture === VORLESUNG4) {
+      const preferred = semester2Examples.find((exampleItem) => exampleItem.id === VL04_PRIORITY_EXAMPLE_ID);
+      if (preferred) {
+        setSelectedExampleId(preferred.id);
+        return;
+      }
+    }
+
     const firstExample = semester2Examples.find((exampleItem) => exampleItem.lecture === lecture);
     if (firstExample) {
       setSelectedExampleId(firstExample.id);
     }
   }, [semester2Examples]);
+
+  const handleLogout = useCallback(() => {
+    runRef.current = false;
+    setIsRunning(false);
+    logout();
+    navigate("/login", { replace: true });
+  }, [navigate]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -178,7 +219,11 @@ export default function Index() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Code2 className="w-5 h-5 text-primary" />
-            <h1 className="text-base font-bold text-foreground">Java Tutor</h1>
+            <h1 className="text-base font-black tracking-tight">
+              <span className="bg-gradient-to-r from-cyan-500 via-emerald-500 to-blue-600 bg-clip-text text-transparent">
+                JavaTutor
+              </span>
+            </h1>
           </div>
           <span className="text-xs text-muted-foreground hidden sm:inline">Interaktiver Ausführungsvisualisierer</span>
         </div>
@@ -209,13 +254,13 @@ export default function Index() {
             </Select>
           ) : null}
 
-          {selectedSemester === "semester2" ? (
+          {selectedSemester === "semester2" && selectedLecture !== VORLESUNG4 ? (
             <Select value={selectedExampleId} onValueChange={handleExampleChange}>
               <SelectTrigger className="w-[280px] h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {semesterExamples.map((ex) => (
+                {exampleDropdownOptions.map((ex) => (
                   <SelectItem key={ex.id} value={ex.id}>
                     <div className="flex flex-col">
                       <span className="font-medium text-xs">{ex.title}</span>
@@ -244,6 +289,11 @@ export default function Index() {
               </SelectContent>
             </Select>
           ) : null}
+
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleLogout}>
+            <LogOut className="w-3.5 h-3.5" />
+            Abmelden
+          </Button>
         </div>
       </header>
 
@@ -312,15 +362,33 @@ export default function Index() {
                   lineOptions={quizOptions}
                   correctLine={correctNextLine}
                   codeLines={example.code.split("\n")}
+                  showGeneratedQuiz={!example.disableQuizQuestions}
+                  studyGuideTitle={example.studyGuideTitle}
+                  studyGuideContent={example.studyGuideContent}
+                  customQuestions={example.customQuestions}
+                  codingExercises={example.codingExercises}
                   customQuestion1={example.customQuestion1}
                   customQuestion2={example.customQuestion2}
                   customQuestion3={example.customQuestion3}
                   customQuestion4={example.customQuestion4}
+                  selectedCustomQuestionAnswers={selectedQuizAnswer.customQuestionAnswers}
                   selectedQuestion1={selectedQuizAnswer.question1}
                   selectedLine={selectedQuizAnswer.line}
                   selectedSnippet={selectedQuizAnswer.snippet}
                   selectedConcept={selectedQuizAnswer.concept}
                   selectedQuestion4={selectedQuizAnswer.question4}
+                  onSelectCustomQuestionAnswer={(questionIndex, answer) =>
+                    setQuizAnswers((prev) => ({
+                      ...prev,
+                      [quizKey]: {
+                        ...(prev[quizKey] ?? {}),
+                        customQuestionAnswers: {
+                          ...((prev[quizKey] ?? {}).customQuestionAnswers ?? {}),
+                          [String(questionIndex)]: answer,
+                        },
+                      },
+                    }))
+                  }
                   onSelectQuestion1={(question1) =>
                     setQuizAnswers((prev) => ({
                       ...prev,
