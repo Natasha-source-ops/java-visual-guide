@@ -1,6 +1,6 @@
-import { ClipboardEvent, DragEvent, FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Lock, UserRound, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { Lock, UserRound, Eye, EyeOff } from "lucide-react";
 import { tryLogin, isAuthenticated } from "@/lib/auth";
 
 export default function Login() {
@@ -12,14 +12,6 @@ export default function Login() {
 
   if (isAuthenticated()) {
     return <Navigate to="/" replace />;
-  }
-
-  function preventClipboard(event: ClipboardEvent<HTMLInputElement>) {
-    event.preventDefault();
-  }
-
-  function preventDrop(event: DragEvent<HTMLInputElement>) {
-    event.preventDefault();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -51,8 +43,7 @@ export default function Login() {
               <h1 className="mt-5 text-4xl font-bold leading-tight text-white">
                 <span className="bg-gradient-to-r from-cyan-300 via-emerald-300 to-blue-300 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(34,211,238,0.35)]">
                   JavaTutor
-                </span>{" "}
-                Zugang
+                </span>
               </h1>
               <p className="mt-4 max-w-md text-sm leading-6 text-slate-200/90">
                 Interaktiver Lernbereich fuer Java im Semesterverlauf: Verfolge Codeausfuehrung Schritt fuer Schritt
@@ -61,16 +52,6 @@ export default function Login() {
               </p>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-100/90">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-lime-300" />
-                <span>Eingabe nur manuell: Einfuegen ist deaktiviert.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-cyan-200" />
-                <span>Lokale Login-Pruefung fuer geschuetzten Zugriff.</span>
-              </div>
-            </div>
           </div>
 
           <div className="p-6 sm:p-10">
@@ -91,8 +72,6 @@ export default function Login() {
                       onChange={(event) => setUsername(event.target.value)}
                       autoComplete="off"
                       spellCheck={false}
-                      onPaste={preventClipboard}
-                      onDrop={preventDrop}
                       className="h-11 w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                       placeholder="Benutzername"
                       required
@@ -110,8 +89,6 @@ export default function Login() {
                       onChange={(event) => setPassword(event.target.value)}
                       autoComplete="new-password"
                       spellCheck={false}
-                      onPaste={preventClipboard}
-                      onDrop={preventDrop}
                       className="h-11 w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
                       placeholder="Passwort"
                       required
